@@ -65,9 +65,9 @@ function WelcomeBack({
       <a className="btn" href={`/manage/${manageToken}`}>
         Open my LatePass
       </a>
-      <div className="btn-row" style={{ marginTop: 10 }}>
+      <div className="btn-row stack" style={{ marginTop: 10 }}>
         <a className="btn ghost" href="/api/auth/google">
-          Use a different account
+          Switch account
         </a>
         <a className="btn ghost" href="/api/auth/logout">
           Log out

@@ -166,6 +166,12 @@ p {
 /* ---- Buttons ---- */
 .btn {
   appearance: none;
+  /* inline-flex + width:100% so <a class="btn"> fills its container too
+     (plain <a> defaults to display:inline and ignores width). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   font-size: 16px;
@@ -173,6 +179,7 @@ p {
   letter-spacing: -0.01em;
   padding: 15px 20px;
   width: 100%;
+  text-align: center;
   cursor: pointer;
   /* Primary = filled white, black label (Apple-style). */
   color: #000;
@@ -637,6 +644,44 @@ ol.steps {
 
 ol.steps li {
   margin-bottom: 6px;
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 480px) {
+  .page {
+    padding: calc(18px + var(--safe-top)) 14px calc(26px + var(--safe-bottom));
+  }
+
+  .card {
+    padding: 20px 17px;
+    border-radius: 20px;
+  }
+
+  .card + .card {
+    margin-top: 14px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .btn {
+    font-size: 15px;
+    padding: 14px 16px;
+  }
+
+  /* Stack secondary action pairs instead of cramming side by side. */
+  .btn-row.stack {
+    flex-direction: column;
+  }
+
+  .btn-row.stack .btn {
+    width: 100%;
+  }
+
+  .linkbox code {
+    font-size: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
