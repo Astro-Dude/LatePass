@@ -1,0 +1,649 @@
+/* ---------------------------------------------------------------------------
+   LatePass — liquid glass, monochrome (black & white only).
+   True-black backdrop, frosted white-translucent panels, hairline white
+   borders, system (SF) font stack, calm motion. No color.
+--------------------------------------------------------------------------- */
+
+:root {
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.62);
+  --text-faint: rgba(255, 255, 255, 0.38);
+
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+
+  --radius: 24px;
+  --radius-sm: 14px;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: #000000;
+  min-height: 100dvh;
+}
+
+/* Faint white light, so the glass has something to refract. Pure monochrome. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(560px 560px at 18% 8%, rgba(255, 255, 255, 0.07), transparent 60%),
+    radial-gradient(640px 640px at 88% 92%, rgba(255, 255, 255, 0.05), transparent 60%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* ---- Layout shells ---- */
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(28px + var(--safe-top)) 20px calc(40px + var(--safe-bottom));
+}
+
+.center {
+  justify-content: center;
+}
+
+.shell {
+  width: 100%;
+  max-width: 560px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 22px;
+}
+
+.brand .dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.25);
+}
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: block;
+  object-fit: contain;
+}
+
+/* ---- Glass card ---- */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(30px) saturate(120%);
+  -webkit-backdrop-filter: blur(30px) saturate(120%);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top sheen line — the giveaway of real glass. */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  font-weight: 650;
+}
+
+h2 {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  font-weight: 600;
+}
+
+p {
+  margin: 0 0 16px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+.muted {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 15px 20px;
+  width: 100%;
+  cursor: pointer;
+  /* Primary = filled white, black label (Apple-style). */
+  color: #000;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.12);
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.16s,
+    opacity 0.16s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:hover {
+  filter: brightness(0.94);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.btn.secondary {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border);
+  box-shadow: none;
+  color: var(--text);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--glass-border);
+  box-shadow: none;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.btn.danger {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-row .btn {
+  width: auto;
+  flex: 1;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-google .g {
+  width: 22px;
+  height: 22px;
+  background: #000;
+  color: #fff;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ---- Forms ---- */
+.field {
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 7px;
+  letter-spacing: -0.005em;
+}
+
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  transition: border-color 0.16s, background 0.16s, box-shadow 0.16s;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint);
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.5;
+  font-family:
+    "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 460px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  margin: 7px 0 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.chip {
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+
+/* ---- Multi-email (CC) input ---- */
+.emails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.email-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 5px 6px 5px 12px;
+  font-size: 13px;
+  max-width: 100%;
+}
+
+.email-chip button {
+  appearance: none;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  line-height: 1;
+  font-size: 13px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  flex: none;
+}
+
+/* Tappable suggestion pills under recipient / cc. */
+.suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip-btn {
+  appearance: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 5px 11px;
+  transition: background 0.16s, color 0.16s, border-color 0.16s;
+  -webkit-tap-highlight-color: transparent;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+/* ---- Link / token box ---- */
+.linkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 6px 6px 14px;
+}
+
+.linkbox code {
+  flex: 1;
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copybtn {
+  flex: none;
+  width: auto;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+/* ---- Banners (monochrome; differentiated by border weight) ---- */
+.banner {
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+}
+
+.banner.error {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.banner.ok {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.banner.info {
+  color: var(--text-dim);
+}
+
+/* ---- Send page ---- */
+.send-card {
+  text-align: center;
+  padding: 34px 28px;
+}
+
+.send-preview {
+  text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 20px 0 24px;
+}
+
+.send-preview .row {
+  display: flex;
+  gap: 8px;
+  font-size: 13.5px;
+  padding: 4px 0;
+}
+
+.send-preview .row .k {
+  color: var(--text-faint);
+  min-width: 64px;
+}
+
+.send-preview .row .v {
+  color: var(--text);
+  word-break: break-word;
+}
+
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+}
+
+.check {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 16px 44px rgba(255, 255, 255, 0.18);
+  animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.check svg {
+  width: 46px;
+  height: 46px;
+  stroke: #000;
+  stroke-width: 4;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: draw 0.4s 0.18s forwards ease-out;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -4px;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+/* ---- Template tabs / segmented control ---- */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.16s, color 0.16s, border-color 0.16s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab.active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.tab.add {
+  color: var(--text);
+  font-weight: 700;
+  padding: 8px 13px;
+}
+
+.tab:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 22px 0;
+  border: 0;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+ol.steps {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+ol.steps li {
+  margin-bottom: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

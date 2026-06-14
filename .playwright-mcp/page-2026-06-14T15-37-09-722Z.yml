@@ -1,0 +1,171 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img "Adobe XD" [ref=e5]
+        - generic [ref=e6]:
+          - button "Cloud documents" [ref=e7] [cursor=pointer]:
+            - img [ref=e8]
+          - 'generic "Account: Shaurya Verma" [ref=e10]': S
+      - generic [ref=e11]:
+        - complementary [ref=e12]:
+          - button "New file" [ref=e13] [cursor=pointer]
+          - button "Open" [ref=e14] [cursor=pointer]
+          - button "Home" [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+            - generic [ref=e19]: Home
+          - generic [ref=e20]: FILES
+          - button "Your files" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e25]: Your files
+          - button "Shared with you" [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+            - generic [ref=e31]: Shared with you
+          - button "Manage links…" [disabled] [ref=e32]:
+            - img [ref=e33]
+            - generic [ref=e36]: Manage links…
+          - button "Deleted" [ref=e37] [cursor=pointer]:
+            - img [ref=e38]
+            - generic [ref=e40]: Deleted
+        - main [ref=e41]:
+          - heading "Welcome to XD" [level=1] [ref=e42]
+          - generic [ref=e43]:
+            - heading "Start a new document" [level=2]
+            - generic:
+              - button "iPhone 14 Pro Max Choose a iPhone 14 Pro Max size 430 x 932 px" [ref=e44]:
+                - img [ref=e46]
+                - generic [ref=e49]:
+                  - generic [ref=e50]: iPhone 14 Pro Max
+                  - button "Choose a iPhone 14 Pro Max size" [ref=e51] [cursor=pointer]:
+                    - img [ref=e52]
+                - generic [ref=e54]: 430 x 932 px
+              - button "Web 1920 Choose a Web 1920 size 1920 x 1080 px" [ref=e55]:
+                - img [ref=e57]
+                - generic [ref=e62]:
+                  - generic [ref=e63]: Web 1920
+                  - button "Choose a Web 1920 size" [ref=e64] [cursor=pointer]:
+                    - img [ref=e65]
+                - generic [ref=e67]: 1920 x 1080 px
+              - button "Instagram Story Choose a Instagram Story size 1080 x 1920 px" [ref=e68]:
+                - img [ref=e70]
+                - generic [ref=e74]:
+                  - generic [ref=e75]: Instagram Story
+                  - button "Choose a Instagram Story size" [ref=e76] [cursor=pointer]:
+                    - img [ref=e77]
+                - generic [ref=e79]: 1080 x 1920 px
+              - button "Custom Size W 1920 H 1080" [ref=e80]:
+                - img [ref=e82]
+                - generic [ref=e88]: Custom Size
+                - generic [ref=e89]:
+                  - generic [ref=e90]:
+                    - text: W
+                    - textbox "Custom width" [ref=e91]: "1920"
+                  - generic [ref=e92]:
+                    - text: H
+                    - textbox "Custom height" [ref=e93]: "1080"
+          - generic [ref=e94]:
+            - img [ref=e96]
+            - generic [ref=e119]:
+              - heading "Explore the power of XD" [level=2] [ref=e120]
+              - paragraph [ref=e121]: Let us help you get up and running with videos and content - always available by clicking on the left menu of this Screen.
+              - button "Go to Learn" [disabled] [ref=e122]
+          - generic [ref=e123]:
+            - heading "Recent" [level=2] [ref=e124]
+            - generic [ref=e125]:
+              - generic [ref=e126]:
+                - button "Open Prototype Playground" [ref=e127] [cursor=pointer]:
+                  - img [ref=e130]
+                - generic [ref=e134]:
+                  - paragraph [ref=e135]: Prototype Playground
+                  - paragraph [ref=e136]: XDC · CLOUD DOCUMENT
+              - generic [ref=e137]:
+                - button "Open Untitled — 12 June, 2.29.38 pm" [ref=e138] [cursor=pointer]:
+                  - img [ref=e141]
+                - generic [ref=e145]:
+                  - paragraph [ref=e146]: Untitled — 12 June, 2.29.38 pm
+                  - paragraph [ref=e147]: XDC · CLOUD DOCUMENT
+              - generic [ref=e148]:
+                - button "Open Untitled — 12 June, 12.29.38 pm" [ref=e149] [cursor=pointer]:
+                  - img [ref=e152]
+                - generic [ref=e156]:
+                  - paragraph [ref=e157]: Untitled — 12 June, 12.29.38 pm
+                  - paragraph [ref=e158]: XDC · CLOUD DOCUMENT
+              - generic [ref=e159]:
+                - button "Open dropdown" [ref=e160] [cursor=pointer]:
+                  - img [ref=e163]
+                - generic [ref=e167]:
+                  - paragraph [ref=e168]: dropdown
+                  - paragraph [ref=e169]: XDC · CLOUD DOCUMENT
+              - generic [ref=e170]:
+                - button "Open UI Design - Smoothie Shop App" [ref=e171] [cursor=pointer]:
+                  - img [ref=e174]
+                - generic [ref=e178]:
+                  - paragraph [ref=e179]: UI Design - Smoothie Shop App
+                  - paragraph [ref=e180]: XDC · CLOUD DOCUMENT
+              - generic [ref=e181]:
+                - button "Open tradixUIkit" [ref=e182] [cursor=pointer]:
+                  - img [ref=e185]
+                - generic [ref=e189]:
+                  - paragraph [ref=e190]: tradixUIkit
+                  - paragraph [ref=e191]: XDC · CLOUD DOCUMENT
+              - generic [ref=e192]:
+                - button "Open TradlyPlatform - Headless Commerce API Kit (Community)" [ref=e193] [cursor=pointer]:
+                  - img [ref=e196]
+                - generic [ref=e200]:
+                  - paragraph [ref=e201]: TradlyPlatform - Headless Commerce API Kit (Community)
+                  - paragraph [ref=e202]: XDC · CLOUD DOCUMENT
+              - generic [ref=e203]:
+                - button "Open Template Agency Website (Community)" [ref=e204] [cursor=pointer]:
+                  - img [ref=e207]
+                - generic [ref=e211]:
+                  - paragraph [ref=e212]: Template Agency Website (Community)
+                  - paragraph [ref=e213]: XDC · CLOUD DOCUMENT
+              - generic [ref=e214]:
+                - button "Open NFT Wallet App (Community)" [ref=e215] [cursor=pointer]:
+                  - img [ref=e218]
+                - generic [ref=e222]:
+                  - paragraph [ref=e223]: NFT Wallet App (Community)
+                  - paragraph [ref=e224]: XDC · CLOUD DOCUMENT
+              - generic [ref=e225]:
+                - button "Open Invoriem_Web_UI" [ref=e226] [cursor=pointer]:
+                  - img [ref=e229]
+                - generic [ref=e233]:
+                  - paragraph [ref=e234]: Invoriem_Web_UI
+                  - paragraph [ref=e235]: XDC · CLOUD DOCUMENT
+              - generic [ref=e236]:
+                - button "Open Glassmorphism UI Trend 2021 by OTAKOYI.COM" [ref=e237] [cursor=pointer]:
+                  - img [ref=e240]
+                - generic [ref=e244]:
+                  - paragraph [ref=e245]: Glassmorphism UI Trend 2021 by OTAKOYI.COM
+                  - paragraph [ref=e246]: XDC · CLOUD DOCUMENT
+              - generic [ref=e247]:
+                - button "Open Gizmo Bike" [ref=e248] [cursor=pointer]:
+                  - img [ref=e251]
+                - generic [ref=e255]:
+                  - paragraph [ref=e256]: Gizmo Bike
+                  - paragraph [ref=e257]: XDC · CLOUD DOCUMENT
+              - generic [ref=e258]:
+                - button "Open GAAMETIIME MOBILE UI KIT" [ref=e259] [cursor=pointer]:
+                  - img [ref=e262]
+                - generic [ref=e266]:
+                  - paragraph [ref=e267]: GAAMETIIME MOBILE UI KIT
+                  - paragraph [ref=e268]: XDC · CLOUD DOCUMENT
+              - generic [ref=e269]:
+                - button "Open Free Landing Page – Light & Dark Mode (Community)" [ref=e270] [cursor=pointer]:
+                  - img [ref=e273]
+                - generic [ref=e277]:
+                  - paragraph [ref=e278]: Free Landing Page – Light & Dark Mode (Community)
+                  - paragraph [ref=e279]: XDC · CLOUD DOCUMENT
+              - generic [ref=e280]:
+                - button "Open E-commerce Website Template (Freebie) (Community)" [ref=e281] [cursor=pointer]:
+                  - img [ref=e284]
+                - generic [ref=e288]:
+                  - paragraph [ref=e289]: E-commerce Website Template (Freebie) (Community)
+                  - paragraph [ref=e290]: XDC · CLOUD DOCUMENT
+              - generic [ref=e291]:
+                - button "Open E-Wallet APP (Community)" [ref=e292] [cursor=pointer]:
+                  - img [ref=e295]
+                - generic [ref=e299]:
+                  - paragraph [ref=e300]: E-Wallet APP (Community)
+                  - paragraph [ref=e301]: XDC · CLOUD DOCUMENT
+  - alert [ref=e302]
