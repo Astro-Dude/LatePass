@@ -46,4 +46,8 @@ export const env = {
   get cronSecret() {
     return process.env.CRON_SECRET || "";
   },
+  /** Optional URL where the native app (APK / store page) can be downloaded. */
+  get appDownloadUrl() {
+    return process.env.APP_DOWNLOAD_URL || "";
+  },
 };

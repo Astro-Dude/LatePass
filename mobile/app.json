@@ -47,7 +47,9 @@
         }
       ],
       "expo-notifications",
-      "expo-asset"
+      "expo-asset",
+      "expo-font",
+      "expo-web-browser"
     ],
     "extra": {
       "apiBaseUrl": "https://latepass-sage.vercel.app",

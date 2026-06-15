@@ -30,27 +30,26 @@ async function notify(body: string) {
 }
 
 /**
- * The combined rule: fire only when ALL hold —
- *  - auto-send is enabled and configured
- *  - it's at/after the set time (local)
- *  - we haven't already sent today
- * Called on geofence ENTER (background) and can be called manually on app open.
+ * Fire only when: auto-send is on, a template is chosen, it's at/after the set
+ * time, and we haven't already sent today. Called on geofence ENTER (the entry
+ * itself proves we're at the location) and can be run manually to test.
  */
 export async function maybeAutoSend(): Promise<
   "sent" | "skipped-disabled" | "skipped-time" | "skipped-already" | "failed"
 > {
   const s = await getSettings();
-  if (!s.enabled || !s.token || !s.templateId) return "skipped-disabled";
+  if (!s.autoEnabled || !s.sendToken || !s.autoTemplateId)
+    return "skipped-disabled";
 
   const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  if (cur < hhmmToMinutes(s.time)) return "skipped-time";
+  if (now.getHours() * 60 + now.getMinutes() < hhmmToMinutes(s.autoTime))
+    return "skipped-time";
 
   const today = todayStr();
   if (s.lastSent === today) return "skipped-already";
 
   try {
-    await sendNow(s.token, s.templateId);
+    await sendNow(s.sendToken, s.autoTemplateId);
     await patchSettings({ lastSent: today });
     await notify("Late note sent ✓ — you're covered.");
     return "sent";

@@ -1,5 +1,4 @@
-/** Preset email suggestions shown in the template editor dropdowns. */
-
+/** Preset email suggestions (mirrors the website). */
 export const RECIPIENT_OPTIONS = [
   "warden.velankanimicrocampus@sst.scaler.com",
   "warden.neeladrimicrocampus@sst.scaler.com",

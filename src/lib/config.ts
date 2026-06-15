@@ -40,6 +40,8 @@ export interface Config {
   send_token: string;
   manage_token: string;
   daily_cap: number;
+  display_name: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -119,6 +121,8 @@ export async function getBySendToken(
 export async function upsertAfterOAuth(
   email: string,
   refreshToken: string,
+  name: string | null = null,
+  picture: string | null = null,
 ): Promise<{ manageToken: string; sendToken: string; isNew: boolean }> {
   const encrypted = encrypt(refreshToken);
 
@@ -128,10 +132,13 @@ export async function upsertAfterOAuth(
     send_token: string;
   }>(
     `update configs
-       set encrypted_credential = $2, provider = 'gmail', updated_at = now()
+       set encrypted_credential = $2, provider = 'gmail',
+           display_name = coalesce($3, display_name),
+           avatar_url = coalesce($4, avatar_url),
+           updated_at = now()
      where user_email = $1
      returning id, manage_token, send_token`,
-    [email, encrypted],
+    [email, encrypted, name, picture],
   );
 
   if (existing[0]) {
@@ -148,10 +155,10 @@ export async function upsertAfterOAuth(
     manage_token: string;
     send_token: string;
   }>(
-    `insert into configs (user_email, encrypted_credential)
-     values ($1, $2)
+    `insert into configs (user_email, encrypted_credential, display_name, avatar_url)
+     values ($1, $2, $3, $4)
      returning id, manage_token, send_token`,
-    [email, encrypted],
+    [email, encrypted, name, picture],
   );
   await createTemplate(created[0].id);
   return {
@@ -196,6 +203,27 @@ export async function getTemplates(configId: string): Promise<Template[]> {
   );
 }
 
+/**
+ * Pull a student's name + roll number out of their college email, e.g.
+ * "shaurya.24bcs10151@sst.scaler.com" → { name: "Shaurya", roll: "24bcs10151" }.
+ * The roll is whatever sits after the first "." and before the "@"; if there's
+ * no such segment we leave it blank rather than guess. Name prefers the Google
+ * display name, falling back to the (capitalised) email prefix.
+ */
+export function deriveIdentity(
+  email: string,
+  displayName: string | null,
+): { name: string; roll: string } {
+  const local = (email.split("@")[0] ?? "").trim();
+  const dot = local.indexOf(".");
+  const prefix = dot > 0 ? local.slice(0, dot) : "";
+  const roll = dot >= 0 ? local.slice(dot + 1) : "";
+  const name =
+    (displayName ?? "").trim() ||
+    (prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "");
+  return { name, roll };
+}
+
 async function ensureTemplate(configId: string): Promise<void> {
   const rows = await query<{ count: number }>(
     `select count(*)::int as count from templates where config_id = $1`,
@@ -205,7 +233,8 @@ async function ensureTemplate(configId: string): Promise<void> {
 }
 
 /**
- * Add a template (seeded with defaults). Returns null if the config already has
+ * Add a template (seeded with defaults). The name + roll fields are pre-filled
+ * from the student's email/display name. Returns null if the config already has
  * the maximum number of templates.
  */
 export async function createTemplate(
@@ -222,10 +251,20 @@ export async function createTemplate(
   const position = countRows[0]?.next ?? 0;
   const label = count === 0 ? DEFAULT_LABEL : `Template ${count + 1}`;
 
+  const idRows = await query<{ user_email: string; display_name: string | null }>(
+    `select user_email, display_name from configs where id = $1`,
+    [configId],
+  );
+  const { name, roll } = deriveIdentity(
+    idRows[0]?.user_email ?? "",
+    idRows[0]?.display_name ?? null,
+  );
+
   const rows = await query<Template>(
     `insert into templates
-       (config_id, position, label, recipient, cc, subject, body)
-     values ($1, $2, $3, $4, $5, $6, $7)
+       (config_id, position, label, recipient, cc, subject, body,
+        field_name, field_roll)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      returning *`,
     [
       configId,
@@ -235,6 +274,8 @@ export async function createTemplate(
       DEFAULT_CC,
       DEFAULT_SUBJECT,
       DEFAULT_TEMPLATE,
+      name,
+      roll,
     ],
   );
   return rows[0];
@@ -395,6 +436,8 @@ export async function getDueAutoSends(
       send_token: r.c_send_token,
       manage_token: r.c_manage_token,
       daily_cap: r.c_daily_cap,
+      display_name: null,
+      avatar_url: null,
       created_at: r.c_created_at,
       updated_at: r.c_updated_at,
     },

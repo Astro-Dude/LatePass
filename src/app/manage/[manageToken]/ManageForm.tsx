@@ -2,29 +2,37 @@
 
 import { useState } from "react";
 import TemplateFields from "@/components/TemplateFields";
+import ProfileMenu from "@/components/ProfileMenu";
 import { toDraft, type TemplateDraft } from "@/lib/templateDraft";
 
 const MAX_TEMPLATES = 3;
+
+type Section = "templates" | "settings";
 
 export default function ManageForm({
   manageToken,
   baseUrl,
   initialSendToken,
   email,
+  name,
+  avatarUrl,
   dailyCap: initialDailyCap,
   initialTemplates,
+  appDownloadUrl,
 }: {
   manageToken: string;
   baseUrl: string;
   initialSendToken: string;
   email: string;
+  name: string | null;
+  avatarUrl: string | null;
   dailyCap: number;
   initialTemplates: TemplateDraft[];
+  appDownloadUrl: string;
 }) {
+  const [section, setSection] = useState<Section>("templates");
   const [templates, setTemplates] = useState<TemplateDraft[]>(initialTemplates);
-  const [selectedId, setSelectedId] = useState(
-    initialTemplates[0]?.id ?? "",
-  );
+  const [selectedId, setSelectedId] = useState(initialTemplates[0]?.id ?? "");
   const [sendToken, setSendToken] = useState(initialSendToken);
   const [dailyCap, setDailyCap] = useState(initialDailyCap);
   const [status, setStatus] = useState<
@@ -32,7 +40,6 @@ export default function ManageForm({
   >(null);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Snapshot of each template as last persisted, to detect unsaved changes.
   const [savedSnap, setSavedSnap] = useState<Record<string, string>>(() =>
     Object.fromEntries(initialTemplates.map((t) => [t.id, JSON.stringify(t)])),
   );
@@ -118,7 +125,7 @@ export default function ManageForm({
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      /* link is selectable in the box */
+      /* link is selectable */
     }
   }
 
@@ -139,133 +146,186 @@ export default function ManageForm({
 
   return (
     <>
-      {/* Send link */}
-      <div className="card">
-        <h2>Your send link</h2>
-        <p className="muted" style={{ marginBottom: 14 }}>
-          Open this on your phone and use “Add to Home Screen”. From there you can
-          pick a template, tweak it, and send.
-        </p>
-        <div className="linkbox">
-          <code>{sendUrl}</code>
-          <button
-            type="button"
-            className="btn copybtn secondary"
-            onClick={copyLink}
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
-        <div className="btn-row" style={{ marginTop: 12 }}>
-          <a
-            className="btn"
-            href={sendUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open send page
+      <header className="nav-wrap">
+        <nav className="navbar">
+          <a href="/" className="nav-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="brand-logo" src="/logo.png" alt="LatePass" />
+            <span>LatePass</span>
           </a>
-          <button type="button" className="btn ghost" onClick={regenerate}>
-            Regenerate
-          </button>
-        </div>
-
-        <details style={{ marginTop: 16 }}>
-          <summary className="muted" style={{ cursor: "pointer" }}>
-            How to add it to my home screen
-          </summary>
-          <div style={{ marginTop: 10 }}>
-            <p className="hint" style={{ margin: "0 0 8px" }}>
-              <strong>iPhone (Safari):</strong> open the link → Share button →
-              “Add to Home Screen”.
-            </p>
-            <p className="hint" style={{ margin: 0 }}>
-              <strong>Android (Chrome):</strong> open the link → ⋮ menu → “Add to
-              Home screen”.
-            </p>
-          </div>
-        </details>
-      </div>
-
-      {/* Templates */}
-      <div className="card">
-        <h2>Your templates</h2>
-        <p className="muted" style={{ marginBottom: 16 }}>
-          Sends from <strong>{email}</strong>. Up to {MAX_TEMPLATES} templates —
-          all editable anytime.
-        </p>
-
-        {status ? (
-          <div className={`banner ${status.kind}`}>{status.msg}</div>
-        ) : null}
-
-        <div className="tabs">
-          {templates.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={`tab ${t.id === selected?.id ? "active" : ""}`}
-              onClick={() => setSelectedId(t.id)}
-            >
-              {t.label || "Untitled"}
-            </button>
-          ))}
-          {templates.length < MAX_TEMPLATES ? (
-            <button type="button" className="tab add" onClick={addTemplate}>
-              + Add
-            </button>
-          ) : null}
-        </div>
-
-        {selected ? (
-          <>
-            <TemplateFields value={selected} onChange={patchSelected} />
-            <div className="btn-row" style={{ marginTop: 8 }}>
-              <button
-                className="btn"
-                type="button"
-                onClick={saveTemplate}
-                disabled={saving || !dirty}
-              >
-                {saving ? "Saving…" : dirty ? "Save template" : "Saved"}
-              </button>
-              {templates.length > 1 ? (
-                <button
-                  className="btn danger"
-                  type="button"
-                  onClick={removeTemplate}
-                >
-                  Delete
-                </button>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-      </div>
-
-      {/* Config */}
-      <div className="card">
-        <h2>Safety</h2>
-        <div className="field">
-          <label htmlFor="cap">Daily send limit</label>
-          <input
-            id="cap"
-            type="number"
-            min={1}
-            max={50}
-            value={dailyCap}
-            onChange={(e) => saveDailyCap(Number(e.target.value))}
+          <ProfileMenu
+            email={email}
+            name={name}
+            avatarUrl={avatarUrl}
+            items={[
+              {
+                label: "Templates",
+                icon: "✎",
+                active: section === "templates",
+                onClick: () => setSection("templates"),
+              },
+              {
+                label: "Settings",
+                icon: "⚙",
+                active: section === "settings",
+                onClick: () => setSection("settings"),
+              },
+              {
+                label: "Log out",
+                icon: "⤶",
+                href: "/api/auth/logout",
+                danger: true,
+                sep: true,
+              },
+            ]}
           />
-          <p className="hint">
-            Max sends per day across all templates. Saved automatically.
-          </p>
-        </div>
-      </div>
+        </nav>
+      </header>
 
-      <p className="footer-note">
-        Keep this manage link private — it can edit everything and regenerate
-        your send link.
-      </p>
+      <main className="page">
+        <div className="shell" style={{ maxWidth: 680 }}>
+          {status ? (
+            <div className={`banner ${status.kind}`}>{status.msg}</div>
+          ) : null}
+
+          {section === "templates" ? (
+            <>
+              {/* Compact send-link bar */}
+              <div className="card" style={{ padding: 18 }}>
+                <p className="section-label">Your send link</p>
+                <div className="linkbox">
+                  <code>{sendUrl}</code>
+                  <button
+                    type="button"
+                    className="btn copybtn secondary"
+                    onClick={copyLink}
+                  >
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <div className="btn-row" style={{ marginTop: 10 }}>
+                  <a
+                    className="btn"
+                    href={sendUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open send page
+                  </a>
+                  <button type="button" className="btn ghost" onClick={regenerate}>
+                    Regenerate
+                  </button>
+                </div>
+                <p className="hint">
+                  Open this on your phone → “Add to Home Screen” to send in one
+                  tap.
+                </p>
+              </div>
+
+              {/* Templates editor */}
+              <div className="card">
+                <h2>Your templates</h2>
+                <p className="muted" style={{ marginBottom: 16 }}>
+                  Sends from <strong>{email}</strong>. Up to {MAX_TEMPLATES} —
+                  the preview fills in your values live.
+                </p>
+
+                <div className="tabs">
+                  {templates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`tab ${t.id === selected?.id ? "active" : ""}`}
+                      onClick={() => setSelectedId(t.id)}
+                    >
+                      {t.label || "Untitled"}
+                    </button>
+                  ))}
+                  {templates.length < MAX_TEMPLATES ? (
+                    <button type="button" className="tab add" onClick={addTemplate}>
+                      + Add
+                    </button>
+                  ) : null}
+                </div>
+
+                {selected ? (
+                  <>
+                    <TemplateFields value={selected} onChange={patchSelected} />
+                    <div className="btn-row" style={{ marginTop: 8 }}>
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={saveTemplate}
+                        disabled={saving || !dirty}
+                      >
+                        {saving ? "Saving…" : dirty ? "Save template" : "Saved"}
+                      </button>
+                      {templates.length > 1 ? (
+                        <button
+                          className="btn danger"
+                          type="button"
+                          onClick={removeTemplate}
+                        >
+                          Delete
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="card">
+                <h2>Settings</h2>
+                <p className="muted" style={{ marginBottom: 16 }}>
+                  Connected as <strong>{email}</strong>.
+                </p>
+                <div className="field">
+                  <label htmlFor="cap">Daily send limit</label>
+                  <input
+                    id="cap"
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={dailyCap}
+                    onChange={(e) => saveDailyCap(Number(e.target.value))}
+                  />
+                  <p className="hint">
+                    Max sends per day across all templates. Saved automatically.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card">
+                <h2>Automatic send by location</h2>
+                <p>
+                  Get the LatePass app to auto-send the moment you reach the
+                  hostel after your set time — no tapping, even with your phone in
+                  your pocket. The website can&apos;t do background location, so
+                  this lives in the app.
+                </p>
+                {appDownloadUrl ? (
+                  <a
+                    className="btn"
+                    href={appDownloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Download the app
+                  </a>
+                ) : (
+                  <p className="hint">App download link coming soon.</p>
+                )}
+              </div>
+
+              <p className="footer-note">
+                Keep this private — this link can edit everything.
+              </p>
+            </>
+          )}
+        </div>
+      </main>
     </>
   );
 }

@@ -7,8 +7,8 @@ WebBrowser.maybeCompleteAuthSession();
 
 /**
  * Run the same Google OAuth the website uses, inside an in-app browser. The
- * backend bounces back to our deep link (latepass://auth?token=…) and we return
- * the send token. No copy-pasting links.
+ * backend bounces back to our deep link (latepass://auth?manage=…&token=…); we
+ * return the manage token, which unlocks full template management in the app.
  */
 export async function loginWithGoogle(): Promise<string> {
   const redirectUri = Linking.createURL("auth"); // e.g. latepass://auth
@@ -24,12 +24,12 @@ export async function loginWithGoogle(): Promise<string> {
   }
 
   const { queryParams } = Linking.parse(result.url);
-  const token = queryParams?.token;
-  if (typeof token !== "string" || !token) {
+  const manage = queryParams?.manage;
+  if (typeof manage !== "string" || !manage) {
     const err = queryParams?.error;
     throw new Error(
-      typeof err === "string" ? err : "No token returned from sign-in.",
+      typeof err === "string" ? err : "Sign-in returned no account.",
     );
   }
-  return token;
+  return manage;
 }

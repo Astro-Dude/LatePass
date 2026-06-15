@@ -13,6 +13,8 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "openid",
   "https://www.googleapis.com/auth/userinfo.email",
+  // Basic profile (name + picture) so the UI can show the user's avatar.
+  "https://www.googleapis.com/auth/userinfo.profile",
 ];
 
 export function createOAuthClient(): OAuth2Client {
@@ -45,12 +47,14 @@ export function buildAuthUrl(state: string): string {
 export interface ExchangedTokens {
   refreshToken: string;
   email: string;
+  name: string | null;
+  picture: string | null;
 }
 
 /**
  * Exchange the authorization code for tokens and resolve the signed-in user's
- * email. Throws if Google did not return a refresh token (e.g. the user had
- * already consented and `prompt=consent` was not honored).
+ * email (plus name + picture from the profile scope). Throws if Google did not
+ * return a refresh token.
  */
 export async function exchangeCode(code: string): Promise<ExchangedTokens> {
   const client = createOAuthClient();
@@ -63,22 +67,22 @@ export async function exchangeCode(code: string): Promise<ExchangedTokens> {
     );
   }
 
-  const email = await resolveEmail(client, tokens.id_token ?? undefined);
-  return { refreshToken: tokens.refresh_token, email };
-}
-
-async function resolveEmail(
-  client: OAuth2Client,
-  idToken?: string,
-): Promise<string> {
-  // Prefer the id_token (no extra network call).
-  if (idToken) {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: env.googleClientId,
-    });
-    const payload = ticket.getPayload();
-    if (payload?.email) return payload.email;
+  if (!tokens.id_token) {
+    throw new Error("Could not determine the connected Google account.");
   }
-  throw new Error("Could not determine the connected Google account email.");
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: env.googleClientId,
+  });
+  const payload = ticket.getPayload();
+  if (!payload?.email) {
+    throw new Error("Could not determine the connected Google account email.");
+  }
+
+  return {
+    refreshToken: tokens.refresh_token,
+    email: payload.email,
+    name: payload.name ?? null,
+    picture: payload.picture ?? null,
+  };
 }

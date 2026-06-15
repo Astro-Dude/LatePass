@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   getByManageToken,
+  getTemplates,
+  MAX_TEMPLATES,
   regenerateSendToken,
   setDailyCap,
 } from "@/lib/config";
@@ -9,6 +11,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ manageToken: string }> };
+
+/** GET: full state for the native app (send token + full templates + cap). */
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { manageToken } = await params;
+  const config = await getByManageToken(manageToken);
+  if (!config) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
+  const templates = await getTemplates(config.id);
+  return NextResponse.json({
+    fromEmail: config.user_email,
+    sendToken: config.send_token,
+    dailyCap: config.daily_cap,
+    maxTemplates: MAX_TEMPLATES,
+    templates,
+  });
+}
 
 /** PUT: config-level settings (daily cap). */
 export async function PUT(req: NextRequest, { params }: Params) {

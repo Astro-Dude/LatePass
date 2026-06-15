@@ -62,13 +62,239 @@ a {
   text-decoration: none;
 }
 
+/* ---- Glass navbar ---- */
+.nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 14px 16px calc(env(safe-area-inset-top, 0px) + 0px);
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+}
+
+.navbar {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 12px 11px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.nav-btn {
+  appearance: none;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s, background 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn:active {
+  transform: scale(0.97);
+}
+
+.nav-btn.primary {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.nav-btn.primary:hover {
+  filter: brightness(0.94);
+  background: #fff;
+}
+
+@media (max-width: 460px) {
+  .nav-brand span {
+    display: none;
+  }
+  .nav-btn {
+    padding: 9px 15px;
+    font-size: 13.5px;
+  }
+}
+
+/* ---- Profile menu (avatar + dropdown) ---- */
+.pm {
+  position: relative;
+}
+
+.pm-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.pm-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  z-index: 61;
+  width: 284px;
+  max-width: calc(100vw - 32px);
+  /* frosted white glass — bright enough to read against the black page */
+  background: rgba(248, 248, 250, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(30px) saturate(170%);
+  -webkit-backdrop-filter: blur(30px) saturate(170%);
+  color: #16161c;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  padding: 6px;
+  overflow: hidden;
+  animation: pmIn 0.16s ease-out;
+}
+
+.pm-menu::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+}
+
+@keyframes pmIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.pm-head {
+  padding: 12px 14px 10px;
+}
+
+.pm-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: #16161c;
+}
+
+.pm-email {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-sep {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 4px 6px;
+}
+
+.pm-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #16161c;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.pm-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.pm-item.active {
+  background: rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.pm-item.danger {
+  color: #d11a2a;
+}
+
+.pm-ico {
+  width: 18px;
+  text-align: center;
+  opacity: 0.85;
+}
+
 /* ---- Layout shells ---- */
 .page {
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(28px + var(--safe-top)) 20px calc(40px + var(--safe-bottom));
+  padding: 18px 20px calc(40px + var(--safe-bottom));
+}
+
+/* Center variant fills the area below the sticky navbar. */
+.page.center {
+  min-height: calc(100dvh - 86px);
+  justify-content: center;
 }
 
 .center {
@@ -568,6 +794,101 @@ textarea {
   color: var(--text-faint);
 }
 
+/* ---- Live preview box ---- */
+.preview-box {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.preview-subject {
+  font-weight: 650;
+  font-size: 14.5px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.preview-body {
+  white-space: pre-wrap;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* ---- Section nav (manage page) ---- */
+.layout {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.sidenav {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+}
+
+.navitem {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 11px 13px;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navitem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.navitem.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--glass-border);
+  color: var(--text);
+}
+
+.navitem .ico {
+  width: 18px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidenav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .navitem {
+    flex: 0 0 auto;
+    padding: 9px 13px;
+  }
+  .navitem span.txt {
+    white-space: nowrap;
+  }
+}
+
 /* ---- Template tabs / segmented control ---- */
 .tabs {
   display: flex;
@@ -709,7 +1030,7 @@ ol.steps li {
 }
 
 /* ---- Mobile ---- */
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .page {
     padding: calc(18px + var(--safe-top)) 14px calc(26px + var(--safe-bottom));
   }
@@ -727,23 +1048,40 @@ ol.steps li {
     font-size: 25px;
   }
 
+  h2 {
+    font-size: 16px;
+  }
+
   .btn {
     font-size: 15px;
     padding: 14px 16px;
   }
 
-  /* Stack secondary action pairs instead of cramming side by side. */
-  .btn-row.stack {
+  /* Stack button pairs vertically so labels never wrap or get clipped. */
+  .btn-row {
     flex-direction: column;
   }
 
-  .btn-row.stack .btn {
+  .btn-row .btn {
     width: 100%;
+  }
+
+  /* Let template tabs use the full width instead of capping at 60%. */
+  .tab {
+    max-width: 100%;
   }
 
   .linkbox code {
     font-size: 12px;
   }
+}
+
+/* Never let long emails / tokens overflow their container. */
+.muted,
+p,
+.linkbox code,
+.send-preview .row .v {
+  overflow-wrap: anywhere;
 }
 
 @media (prefers-reduced-motion: reduce) {

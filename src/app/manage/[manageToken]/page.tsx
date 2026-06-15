@@ -18,22 +18,16 @@ export default async function ManagePage({
   const templates = await getTemplates(config.id);
 
   return (
-    <main className="page">
-      <div className="shell">
-        <div className="brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-logo" src="/logo.png" alt="LatePass" />
-          LatePass
-        </div>
-        <ManageForm
-          manageToken={manageToken}
-          baseUrl={env.appBaseUrl}
-          initialSendToken={config.send_token}
-          email={config.user_email}
-          dailyCap={config.daily_cap}
-          initialTemplates={templates.map(toDraft)}
-        />
-      </div>
-    </main>
+    <ManageForm
+      manageToken={manageToken}
+      baseUrl={env.appBaseUrl}
+      initialSendToken={config.send_token}
+      email={config.user_email}
+      name={config.display_name}
+      avatarUrl={config.avatar_url}
+      dailyCap={config.daily_cap}
+      initialTemplates={templates.map(toDraft)}
+      appDownloadUrl={env.appDownloadUrl}
+    />
   );
 }

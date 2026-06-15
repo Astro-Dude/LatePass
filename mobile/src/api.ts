@@ -4,10 +4,34 @@ export const BASE: string =
   (Constants.expoConfig?.extra?.apiBaseUrl as string) ||
   "https://latepass-sage.vercel.app";
 
+export interface AppTemplate {
+  id: string;
+  label: string;
+  recipient: string;
+  cc: string | null;
+  subject: string;
+  body: string;
+  field_name: string;
+  field_room: string;
+  field_roll: string;
+  field_arrival_time: string;
+  field_reason: string;
+}
+
+export interface AppState {
+  fromEmail: string;
+  sendToken: string;
+  dailyCap: number;
+  maxTemplates: number;
+  templates: AppTemplate[];
+}
+
+/** Fields the app can write back for a template. */
+export type TemplateInput = Omit<AppTemplate, "id">;
+
 /**
- * Parse a response as JSON, but fail with a clear message if the server
- * returned HTML (e.g. a 404 page when the endpoint isn't deployed yet) instead
- * of the generic "JSON parse error: unexpected character".
+ * Parse a response as JSON, with a clear message when the server returns HTML
+ * (e.g. a 404 page if the backend isn't deployed) instead of JSON.
  */
 async function readJson(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text();
@@ -21,43 +45,83 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
-export interface TemplateInfo {
-  id: string;
-  label: string;
-  recipient: string;
-  cc: string | null;
-  subject: string;
-}
-
-export interface SendInfo {
-  fromEmail: string;
-  templates: TemplateInfo[];
-}
-
-/** Accept a full /t/{token} link or a bare token, return the token. */
+/** Accept a full link or a bare token, return the 36-char token. */
 export function extractToken(input: string): string {
-  const s = input.trim();
-  const m = s.match(/[0-9a-fA-F-]{36}/);
-  return m ? m[0] : s;
+  const m = input.trim().match(/[0-9a-fA-F-]{36}/);
+  return m ? m[0] : input.trim();
 }
 
-export async function fetchInfo(token: string): Promise<SendInfo> {
+export async function loadState(manageToken: string): Promise<AppState> {
   const res = await fetch(
-    `${BASE}/api/send/info?token=${encodeURIComponent(token)}`,
+    `${BASE}/api/config/${encodeURIComponent(manageToken)}`,
   );
   const data = await readJson(res);
-  if (!res.ok) throw new Error((data.error as string) || "Couldn't load your link.");
-  return data as unknown as SendInfo;
+  if (!res.ok) throw new Error((data.error as string) || "Couldn't load.");
+  return data as unknown as AppState;
+}
+
+export async function createTemplate(
+  manageToken: string,
+): Promise<AppTemplate> {
+  const res = await fetch(
+    `${BASE}/api/config/${encodeURIComponent(manageToken)}/templates`,
+    { method: "POST" },
+  );
+  const data = await readJson(res);
+  if (!res.ok) throw new Error((data.error as string) || "Couldn't add.");
+  return data.template as AppTemplate;
+}
+
+export async function updateTemplate(
+  manageToken: string,
+  id: string,
+  input: TemplateInput,
+): Promise<void> {
+  const res = await fetch(
+    `${BASE}/api/config/${encodeURIComponent(manageToken)}/templates/${id}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  const data = await readJson(res);
+  if (!res.ok) throw new Error((data.error as string) || "Couldn't save.");
+}
+
+export async function deleteTemplate(
+  manageToken: string,
+  id: string,
+): Promise<void> {
+  const res = await fetch(
+    `${BASE}/api/config/${encodeURIComponent(manageToken)}/templates/${id}`,
+    { method: "DELETE" },
+  );
+  const data = await readJson(res);
+  if (!res.ok) throw new Error((data.error as string) || "Couldn't delete.");
+}
+
+export async function setDailyCap(
+  manageToken: string,
+  cap: number,
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/config/${encodeURIComponent(manageToken)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ daily_cap: cap }),
+  });
+  const data = await readJson(res);
+  if (!res.ok) throw new Error((data.error as string) || "Couldn't save.");
 }
 
 export async function sendNow(
-  token: string,
+  sendToken: string,
   templateId: string,
 ): Promise<void> {
   const res = await fetch(`${BASE}/api/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, templateId }),
+    body: JSON.stringify({ token: sendToken, templateId }),
   });
   const data = await readJson(res);
   if (!res.ok) throw new Error((data.error as string) || "Send failed.");

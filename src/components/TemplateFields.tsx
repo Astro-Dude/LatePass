@@ -13,6 +13,25 @@ const PLACEHOLDERS = [
   "{date}",
 ];
 
+/** Client-side preview render — fills placeholders with the entered values. */
+function renderPreview(text: string, v: TemplateDraft): string {
+  const date = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
+  const map: Record<string, string> = {
+    name: v.field_name,
+    room: v.field_room,
+    roll: v.field_roll,
+    arrivalTime: v.field_arrival_time,
+    reason: v.field_reason,
+    date,
+  };
+  return text.replace(/\{(\w+)\}/g, (m, k: string) => (k in map ? map[k] : m));
+}
+
 /** Reusable editable fields for one template (used on manage + send pages). */
 export default function TemplateFields({
   value,
@@ -136,6 +155,17 @@ export default function TemplateFields({
           onChange={(e) => onChange({ field_reason: e.target.value })}
           placeholder="returning from home / event ran late"
         />
+      </div>
+
+      {/* Live preview — updates as you type */}
+      <div className="field">
+        <label>Live preview</label>
+        <div className="preview-box">
+          <div className="preview-subject">
+            {renderPreview(value.subject, value) || "(subject)"}
+          </div>
+          <div className="preview-body">{renderPreview(value.body, value)}</div>
+        </div>
       </div>
     </>
   );

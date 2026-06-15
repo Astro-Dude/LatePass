@@ -27,18 +27,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { refreshToken, email } = await exchangeCode(code);
+    const { refreshToken, email, name, picture } = await exchangeCode(code);
     const { manageToken, sendToken } = await upsertAfterOAuth(
       email,
       refreshToken,
+      name,
+      picture,
     );
 
-    // Native-app login: bounce back into the app with its send token.
+    // Native-app login: bounce back into the app with its tokens. The manage
+    // token unlocks full template management; the send token is used to send.
     const appReturn = req.cookies.get("lp_oauth_return")?.value;
     if (appReturn && isAppReturnUri(appReturn)) {
       const sep = appReturn.includes("?") ? "&" : "?";
       const res = NextResponse.redirect(
-        `${appReturn}${sep}token=${sendToken}`,
+        `${appReturn}${sep}manage=${manageToken}&token=${sendToken}`,
       );
       res.cookies.delete("lp_oauth_state");
       res.cookies.delete("lp_oauth_return");

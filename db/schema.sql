@@ -12,6 +12,8 @@ create table if not exists configs (
   send_token           uuid not null unique default gen_random_uuid(),
   manage_token         uuid not null unique default gen_random_uuid(),
   daily_cap            integer not null default 1,
+  display_name         text,
+  avatar_url           text,
   created_at           timestamptz not null default now(),
   updated_at           timestamptz not null default now()
 );
