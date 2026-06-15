@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Image,
   Linking,
   Pressable,
@@ -14,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import {
@@ -36,7 +38,7 @@ import {
   saveSettings,
   type Settings,
 } from "./src/storage";
-import { maybeAutoSend, startGeofence, stopGeofence } from "./src/geofence";
+import { maybeAutoSend, startAutoSend, stopAutoSend } from "./src/geofence";
 import { CC_OPTIONS, RECIPIENT_OPTIONS } from "./src/contacts";
 import { renderTemplate } from "./src/render";
 
@@ -89,7 +91,26 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [sendSel, setSendSel] = useState("");
   const [draft, setDraft] = useState<AppTemplate | null>(null);
-  const [status, setStatus] = useState("");
+  const [toast, setToast] = useState("");
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(message: string) {
+    setToast(message);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    Animated.timing(toastOpacity, {
+      toValue: 1,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+    toastTimer.current = setTimeout(() => {
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 240,
+        useNativeDriver: true,
+      }).start(() => setToast(""));
+    }, 1900);
+  }
 
   useEffect(() => {
     (async () => {
@@ -142,7 +163,7 @@ export default function App() {
   }
 
   async function disconnect() {
-    await stopGeofence();
+    await stopAutoSend();
     await saveSettings(DEFAULT_SETTINGS);
     setSettings(DEFAULT_SETTINGS);
     setApp(null);
@@ -154,7 +175,6 @@ export default function App() {
     if (s === "templates" && app) {
       const cur = app.templates.find((t) => t.id === draft?.id) ?? app.templates[0];
       setDraft(cur ? { ...cur } : null);
-      setStatus("");
     }
     setScreen(s);
   }
@@ -172,7 +192,6 @@ export default function App() {
 
   function patchDraft(patch: Partial<AppTemplate>) {
     setDraft((d) => (d ? { ...d, ...patch } : d));
-    setStatus("");
   }
 
   async function saveDraft() {
@@ -181,7 +200,7 @@ export default function App() {
     try {
       await updateTemplate(settings.manageToken, draft.id, toInput(draft));
       await refresh(settings.manageToken);
-      setStatus("Saved ✓");
+      showToast("Template saved");
     } catch (e) {
       Alert.alert("Couldn't save", msg(e));
     } finally {
@@ -196,6 +215,7 @@ export default function App() {
       const t = await createTemplate(settings.manageToken);
       await refresh(settings.manageToken);
       setDraft({ ...t });
+      showToast("Template added");
     } catch (e) {
       Alert.alert("Couldn't add", msg(e));
     } finally {
@@ -213,6 +233,7 @@ export default function App() {
       await deleteTemplate(settings.manageToken, draft.id);
       const st = await refresh(settings.manageToken);
       setDraft(st.templates[0] ? { ...st.templates[0] } : null);
+      showToast("Template deleted");
     } catch (e) {
       Alert.alert("Couldn't delete", msg(e));
     } finally {
@@ -225,6 +246,7 @@ export default function App() {
     try {
       await setDailyCap(settings.manageToken, cap);
       await refresh(settings.manageToken);
+      showToast("Daily limit updated");
     } catch (e) {
       Alert.alert("Couldn't save", msg(e));
     }
@@ -239,6 +261,7 @@ export default function App() {
         accuracy: Location.Accuracy.High,
       });
       await upd({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      showToast("Location saved");
     } catch {
       Alert.alert("Error", "Couldn't get your location.");
     } finally {
@@ -248,8 +271,9 @@ export default function App() {
 
   async function toggleAuto(value: boolean) {
     if (!value) {
-      await stopGeofence();
+      await stopAutoSend();
       await upd({ autoEnabled: false });
+      showToast("Auto-send off");
       return;
     }
     if (!settings.autoTemplateId)
@@ -266,11 +290,14 @@ export default function App() {
       if (bg.status !== "granted")
         return Alert.alert(
           "Set location to “Always”",
-          "Background location is required to auto-send when the app is closed.",
+          "Background location is required to check where you are when the time hits.",
         );
-      await startGeofence(settings.lat, settings.lng, settings.radius);
       await upd({ autoEnabled: true });
-      Alert.alert("Armed", "It'll auto-send when you arrive after your time.");
+      await startAutoSend();
+      Alert.alert(
+        "Armed",
+        "When your time hits, if you're still at this spot, it sends automatically — even with the app closed.",
+      );
     } catch (e) {
       Alert.alert("Couldn't arm", msg(e));
     } finally {
@@ -352,16 +379,12 @@ export default function App() {
               <TemplatesScreen
                 app={app}
                 draft={draft}
-                onSelect={(t) => {
-                  setDraft({ ...t });
-                  setStatus("");
-                }}
+                onSelect={(t) => setDraft({ ...t })}
                 onPatch={patchDraft}
                 onSave={saveDraft}
                 onAdd={addTemplate}
                 onDelete={removeTemplate}
                 busy={busy}
-                status={status}
               />
             ) : null}
             {screen === "auto" ? (
@@ -394,6 +417,15 @@ export default function App() {
             <TabIcon icon="location" label="Auto" active={screen === "auto"} onPress={() => goTo("auto")} />
             <TabIcon icon="person" label="Profile" active={screen === "profile"} onPress={() => goTo("profile")} />
           </View>
+
+          {toast ? (
+            <Animated.View
+              style={[styles.toast, { opacity: toastOpacity }]}
+              pointerEvents="none"
+            >
+              <Text style={styles.toastText}>{toast}</Text>
+            </Animated.View>
+          ) : null}
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -508,7 +540,6 @@ function TemplatesScreen({
   onAdd,
   onDelete,
   busy,
-  status,
 }: {
   app: AppState;
   draft: AppTemplate | null;
@@ -518,7 +549,6 @@ function TemplatesScreen({
   onAdd: () => void;
   onDelete: () => void;
   busy: boolean;
-  status: string;
 }) {
   return (
     <View style={styles.card}>
@@ -581,7 +611,6 @@ function TemplatesScreen({
             <Text style={styles.mono}>{renderTemplate(draft.body, draft)}</Text>
           </View>
 
-          {status ? <Text style={styles.status}>{status}</Text> : null}
           <Btn label="Save template" onPress={onSave} busy={busy} />
           {app.templates.length > 1 ? (
             <>
@@ -616,8 +645,9 @@ function AutoScreen({
   return (
     <View style={styles.card}>
       <Text style={styles.p}>
-        Pick a note, set a time, save your spot. When you arrive there after the
-        time, it sends automatically — even with the app closed.
+        Pick a note, set a time, save your spot. When that time arrives, if
+        you're still at this spot, it sends automatically — even with the app
+        closed. (Checked every ~15 min, so it may send shortly after the time.)
       </Text>
 
       <Text style={styles.label}>Which note</Text>
@@ -627,8 +657,8 @@ function AutoScreen({
         onSelect={(id) => onUpd({ autoTemplateId: id })}
       />
 
-      <Field
-        label="Send after (24h, e.g. 21:30)"
+      <TimeField
+        label="Send at"
         value={settings.autoTime}
         onChange={(v) => onUpd({ autoTime: v })}
       />
@@ -643,7 +673,7 @@ function AutoScreen({
       <Text style={styles.hint}>
         {hasLoc
           ? `Saved: ${settings.lat!.toFixed(4)}, ${settings.lng!.toFixed(4)} · within ${settings.radius} m`
-          : "Save this while standing at the hostel."}
+          : "Save this while standing at the spot (e.g. your office)."}
       </Text>
       <Field
         label="Trigger radius (m)"
@@ -826,6 +856,59 @@ function Field({
   );
 }
 
+function hhmmToDate(hhmm: string): Date {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h || 0, m || 0, 0, 0);
+  return d;
+}
+
+function dateToHhmm(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(
+    d.getMinutes(),
+  ).padStart(2, "0")}`;
+}
+
+/** 24h "HH:MM" → friendly "9:30 PM". */
+function prettyTime(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const ampm = (h || 0) < 12 ? "AM" : "PM";
+  const h12 = (h || 0) % 12 || 12;
+  return `${h12}:${String(m || 0).padStart(2, "0")} ${ampm}`;
+}
+
+/** Tap to open the native time picker; stores the result as "HH:MM". */
+function TimeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginTop: 14 }}>
+      <Text style={styles.label}>{label}</Text>
+      <Pressable style={styles.input} onPress={() => setOpen(true)}>
+        <Text style={styles.timeValue}>{prettyTime(value)}</Text>
+      </Pressable>
+      {open ? (
+        <DateTimePicker
+          value={hhmmToDate(value)}
+          mode="time"
+          is24Hour={false}
+          onChange={(event, selected) => {
+            setOpen(false);
+            if (event.type === "set" && selected) onChange(dateToHhmm(selected));
+          }}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 function PrevRow({ k, v }: { k: string; v: string }) {
   return (
     <View style={styles.prevRow}>
@@ -906,6 +989,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   inputMultiline: { minHeight: 120, textAlignVertical: "top" },
+  timeValue: { color: "#fff", fontSize: 15 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" },
   chip: {
     borderColor: "rgba(255,255,255,0.14)",
@@ -950,7 +1034,23 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   toggleLabel: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  status: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 14 },
+  toast: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    bottom: 86,
+    backgroundColor: "rgba(245,245,250,0.97)",
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  toastText: { color: "#16161c", fontSize: 14, fontWeight: "600" },
   avatar: {
     width: 64,
     height: 64,

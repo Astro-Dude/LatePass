@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f78052f9-f864-4b52-a848-87ad1ee6247e"
+      }
+    },
+    "android": {
+      "package": "com.astrodude.latepass"
+    }
+  }
+}

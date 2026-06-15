@@ -18,8 +18,8 @@
           "location",
           "fetch"
         ],
-        "NSLocationWhenInUseUsageDescription": "LatePass uses your location to auto-send your late note when you arrive at your saved spot.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "LatePass needs background location so it can auto-send when you reach your saved spot, even when the app is closed."
+        "NSLocationWhenInUseUsageDescription": "LatePass uses your location to check whether you're at your saved spot when your set time arrives.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "LatePass needs background location so that, when your set time arrives, it can check if you're still at your saved spot and auto-send — even when the app is closed."
       }
     },
     "android": {
@@ -41,7 +41,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "LatePass auto-sends your late note when you arrive at your saved spot.",
+          "locationAlwaysAndWhenInUsePermission": "LatePass checks if you're at your saved spot when your set time arrives, to auto-send your late note.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true
         }
@@ -49,7 +49,9 @@
       "expo-notifications",
       "expo-asset",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-background-task",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "apiBaseUrl": "https://latepass-sage.vercel.app",

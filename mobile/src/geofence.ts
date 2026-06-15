@@ -1,10 +1,11 @@
 import * as TaskManager from "expo-task-manager";
 import * as Location from "expo-location";
+import * as BackgroundTask from "expo-background-task";
 import * as Notifications from "expo-notifications";
 import { sendNow } from "./api";
 import { getSettings, patchSettings } from "./storage";
 
-export const GEOFENCE_TASK = "latepass-geofence";
+export const AUTOSEND_TASK = "latepass-autosend";
 
 function hhmmToMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -18,6 +19,25 @@ function todayStr(): string {
   ).padStart(2, "0")}`;
 }
 
+/** Great-circle distance in metres between two coordinates. */
+function distanceMeters(
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const s1 = toRad(aLat);
+  const s2 = toRad(bLat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(s1) * Math.cos(s2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
 async function notify(body: string) {
   try {
     await Notifications.scheduleNotificationAsync({
@@ -29,16 +49,32 @@ async function notify(body: string) {
   }
 }
 
+export type AutoSendResult =
+  | "sent"
+  | "skipped-disabled"
+  | "skipped-time"
+  | "skipped-already"
+  | "skipped-location"
+  | "skipped-away"
+  | "failed";
+
 /**
- * Fire only when: auto-send is on, a template is chosen, it's at/after the set
- * time, and we haven't already sent today. Called on geofence ENTER (the entry
- * itself proves we're at the location) and can be run manually to test.
+ * Send only when ALL hold: auto-send is on, a template is chosen, it's at/after
+ * the set time today, we haven't already sent today, and — crucially — you are
+ * *currently* at the saved spot. The location is checked live at decision time
+ * (not on arrival), so e.g. still being at your internship office when the time
+ * hits is what triggers it. Run periodically by the background task, and can be
+ * run manually to test.
  */
-export async function maybeAutoSend(): Promise<
-  "sent" | "skipped-disabled" | "skipped-time" | "skipped-already" | "failed"
-> {
+export async function maybeAutoSend(): Promise<AutoSendResult> {
   const s = await getSettings();
-  if (!s.autoEnabled || !s.sendToken || !s.autoTemplateId)
+  if (
+    !s.autoEnabled ||
+    !s.sendToken ||
+    !s.autoTemplateId ||
+    s.lat == null ||
+    s.lng == null
+  )
     return "skipped-disabled";
 
   const now = new Date();
@@ -47,6 +83,24 @@ export async function maybeAutoSend(): Promise<
 
   const today = todayStr();
   if (s.lastSent === today) return "skipped-already";
+
+  // Are we actually at the saved location right now? If we can't get a fix,
+  // don't send — we won't guess.
+  let pos: Location.LocationObject;
+  try {
+    pos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+  } catch {
+    return "skipped-location";
+  }
+  const dist = distanceMeters(
+    pos.coords.latitude,
+    pos.coords.longitude,
+    s.lat,
+    s.lng,
+  );
+  if (dist > s.radius) return "skipped-away";
 
   try {
     await sendNow(s.sendToken, s.autoTemplateId);
@@ -61,45 +115,33 @@ export async function maybeAutoSend(): Promise<
   }
 }
 
-// Background task: wakes the app when the user ENTERS the saved region.
-TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
-  if (error) return;
-  const { eventType } = (data ?? {}) as {
-    eventType?: Location.GeofencingEventType;
-  };
-  if (eventType === Location.GeofencingEventType.Enter) {
+// Background task: the OS wakes it periodically (~every 15 min, inexact). Each
+// run re-checks the rule, so once the clock passes your time and you're at the
+// spot, the next wake-up sends it — even with the app closed.
+TaskManager.defineTask(AUTOSEND_TASK, async () => {
+  try {
     await maybeAutoSend();
+  } catch {
+    /* swallow — try again next cycle */
   }
+  return BackgroundTask.BackgroundTaskResult.Success;
 });
 
-export async function isGeofenceRunning(): Promise<boolean> {
+export async function isAutoSendRunning(): Promise<boolean> {
   try {
-    return await Location.hasStartedGeofencingAsync(GEOFENCE_TASK);
+    return await TaskManager.isTaskRegisteredAsync(AUTOSEND_TASK);
   } catch {
     return false;
   }
 }
 
-export async function startGeofence(
-  lat: number,
-  lng: number,
-  radius: number,
-): Promise<void> {
-  await stopGeofence();
-  await Location.startGeofencingAsync(GEOFENCE_TASK, [
-    {
-      identifier: "home",
-      latitude: lat,
-      longitude: lng,
-      radius,
-      notifyOnEnter: true,
-      notifyOnExit: false,
-    },
-  ]);
+export async function startAutoSend(): Promise<void> {
+  await stopAutoSend();
+  await BackgroundTask.registerTaskAsync(AUTOSEND_TASK, { minimumInterval: 15 });
 }
 
-export async function stopGeofence(): Promise<void> {
-  if (await isGeofenceRunning()) {
-    await Location.stopGeofencingAsync(GEOFENCE_TASK);
+export async function stopAutoSend(): Promise<void> {
+  if (await isAutoSendRunning()) {
+    await BackgroundTask.unregisterTaskAsync(AUTOSEND_TASK);
   }
 }
