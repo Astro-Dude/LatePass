@@ -141,6 +141,15 @@ Two tokens guard each config:
 
 ---
 
+## Automatic, location-based send
+
+The web app is **manual send only** (open the link → tap → sent). Hands-off,
+location-gated auto-send ("send automatically when I arrive at the hostel after
+my set time, even with the app closed") lives in the **native app** — see
+[`mobile/`](mobile/). It reuses this backend via the read-only
+`GET /api/send/info` and the existing `POST /api/send` endpoints; nothing else
+is needed server-side.
+
 ## Swapping the sending provider later
 
 Everything Gmail-specific lives behind `EmailSender`

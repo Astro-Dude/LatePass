@@ -28,8 +28,7 @@ export default function SendApp({
     Object.fromEntries(initialTemplates.map((t) => [t.id, JSON.stringify(t)])),
   );
 
-  const selected =
-    templates.find((t) => t.id === selectedId) ?? templates[0];
+  const selected = templates.find((t) => t.id === selectedId) ?? templates[0];
   const dirty = selected
     ? savedSnap[selected.id] !== JSON.stringify(selected)
     : false;

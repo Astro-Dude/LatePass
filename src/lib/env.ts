@@ -42,4 +42,8 @@ export const env = {
   get encryptionKey() {
     return required("ENCRYPTION_KEY");
   },
+  /** Optional shared secret protecting the cron endpoint. */
+  get cronSecret() {
+    return process.env.CRON_SECRET || "";
+  },
 };

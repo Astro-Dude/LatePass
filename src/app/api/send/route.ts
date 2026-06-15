@@ -4,11 +4,8 @@ import {
   getBySendToken,
   getTemplateForConfig,
   logSend,
-  type Template,
 } from "@/lib/config";
-import { decrypt } from "@/lib/crypto";
-import { getSender } from "@/lib/email";
-import { formatDate, renderTemplate } from "@/lib/template";
+import { sendTemplateEmail } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,19 +59,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { subject, text } = render(template);
-    const sender = getSender(config.provider);
-    await sender.send(
-      {
-        fromEmail: config.user_email,
-        to: template.recipient,
-        cc: template.cc,
-        subject,
-        text,
-      },
-      decrypt(config.encrypted_credential),
-    );
-
+    await sendTemplateEmail(config, template);
     await logSend(config.id, template.id, "sent", template.recipient);
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -86,19 +71,4 @@ export async function POST(req: NextRequest) {
       { status: 502 },
     );
   }
-}
-
-function render(template: Template): { subject: string; text: string } {
-  const values = {
-    name: template.field_name,
-    room: template.field_room,
-    roll: template.field_roll,
-    arrivalTime: template.field_arrival_time,
-    reason: template.field_reason,
-    date: formatDate(),
-  };
-  return {
-    subject: renderTemplate(template.subject, values),
-    text: renderTemplate(template.body, values),
-  };
 }

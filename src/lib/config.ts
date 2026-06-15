@@ -58,6 +58,13 @@ export interface Template {
   field_roll: string;
   field_arrival_time: string;
   field_reason: string;
+  auto_send: boolean;
+  auto_send_time: string | null;
+  last_auto_sent_on: string | null;
+  geo_auto: boolean;
+  geo_lat: number | null;
+  geo_lng: number | null;
+  geo_radius: number;
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +81,12 @@ export interface EditableTemplate {
   field_roll: string;
   field_arrival_time: string;
   field_reason: string;
+  auto_send: boolean;
+  auto_send_time: string | null;
+  geo_auto: boolean;
+  geo_lat: number | null;
+  geo_lng: number | null;
+  geo_radius: number;
 }
 
 // ---- configs ----
@@ -106,30 +119,46 @@ export async function getBySendToken(
 export async function upsertAfterOAuth(
   email: string,
   refreshToken: string,
-): Promise<{ manageToken: string; isNew: boolean }> {
+): Promise<{ manageToken: string; sendToken: string; isNew: boolean }> {
   const encrypted = encrypt(refreshToken);
 
-  const existing = await query<{ id: string; manage_token: string }>(
+  const existing = await query<{
+    id: string;
+    manage_token: string;
+    send_token: string;
+  }>(
     `update configs
        set encrypted_credential = $2, provider = 'gmail', updated_at = now()
      where user_email = $1
-     returning id, manage_token`,
+     returning id, manage_token, send_token`,
     [email, encrypted],
   );
 
   if (existing[0]) {
     await ensureTemplate(existing[0].id);
-    return { manageToken: existing[0].manage_token, isNew: false };
+    return {
+      manageToken: existing[0].manage_token,
+      sendToken: existing[0].send_token,
+      isNew: false,
+    };
   }
 
-  const created = await query<{ id: string; manage_token: string }>(
+  const created = await query<{
+    id: string;
+    manage_token: string;
+    send_token: string;
+  }>(
     `insert into configs (user_email, encrypted_credential)
      values ($1, $2)
-     returning id, manage_token`,
+     returning id, manage_token, send_token`,
     [email, encrypted],
   );
   await createTemplate(created[0].id);
-  return { manageToken: created[0].manage_token, isNew: true };
+  return {
+    manageToken: created[0].manage_token,
+    sendToken: created[0].send_token,
+    isNew: true,
+  };
 }
 
 export async function setDailyCap(
@@ -221,7 +250,10 @@ export async function updateTemplate(
     `update templates set
        label = $3, recipient = $4, cc = $5, subject = $6, body = $7,
        field_name = $8, field_room = $9, field_roll = $10,
-       field_arrival_time = $11, field_reason = $12, updated_at = now()
+       field_arrival_time = $11, field_reason = $12,
+       auto_send = $13, auto_send_time = $14,
+       geo_auto = $15, geo_lat = $16, geo_lng = $17, geo_radius = $18,
+       updated_at = now()
      where id = $1 and config_id = $2
      returning *`,
     [
@@ -237,6 +269,12 @@ export async function updateTemplate(
       data.field_roll,
       data.field_arrival_time,
       data.field_reason,
+      data.auto_send,
+      data.auto_send_time,
+      data.geo_auto,
+      data.geo_lat,
+      data.geo_lng,
+      data.geo_radius,
     ],
   );
   return rows[0] ?? null;
@@ -298,4 +336,102 @@ export async function logSend(
      values ($1, $2, $3, $4, $5)`,
     [configId, templateId, status, recipient, error ?? null],
   );
+}
+
+// ---- auto-send (cron) ----
+
+/** A template that is due to auto-send now, with its owning config. */
+export interface AutoSendJob {
+  config: Config;
+  template: Template;
+}
+
+/**
+ * Templates whose auto-send time has arrived today (in APP_TIMEZONE) and which
+ * haven't already auto-sent today.
+ * @param today  'YYYY-MM-DD' in APP_TIMEZONE
+ * @param hhmm   'HH:MM' current time in APP_TIMEZONE
+ */
+export async function getDueAutoSends(
+  today: string,
+  hhmm: string,
+): Promise<AutoSendJob[]> {
+  type Row = Template & {
+    c_user_email: string;
+    c_provider: string;
+    c_encrypted_credential: string;
+    c_send_token: string;
+    c_manage_token: string;
+    c_daily_cap: number;
+    c_created_at: string;
+    c_updated_at: string;
+  };
+
+  const rows = await query<Row>(
+    `select t.*,
+            c.user_email           as c_user_email,
+            c.provider             as c_provider,
+            c.encrypted_credential as c_encrypted_credential,
+            c.send_token           as c_send_token,
+            c.manage_token         as c_manage_token,
+            c.daily_cap            as c_daily_cap,
+            c.created_at           as c_created_at,
+            c.updated_at           as c_updated_at
+       from templates t
+       join configs c on c.id = t.config_id
+      where t.auto_send = true
+        and t.auto_send_time is not null
+        and t.auto_send_time <= $2
+        and (t.last_auto_sent_on is null or t.last_auto_sent_on < $1)`,
+    [today, hhmm],
+  );
+
+  return rows.map((r) => ({
+    config: {
+      id: r.config_id,
+      user_email: r.c_user_email,
+      provider: r.c_provider,
+      encrypted_credential: r.c_encrypted_credential,
+      send_token: r.c_send_token,
+      manage_token: r.c_manage_token,
+      daily_cap: r.c_daily_cap,
+      created_at: r.c_created_at,
+      updated_at: r.c_updated_at,
+    },
+    template: {
+      id: r.id,
+      config_id: r.config_id,
+      position: r.position,
+      label: r.label,
+      recipient: r.recipient,
+      cc: r.cc,
+      subject: r.subject,
+      body: r.body,
+      field_name: r.field_name,
+      field_room: r.field_room,
+      field_roll: r.field_roll,
+      field_arrival_time: r.field_arrival_time,
+      field_reason: r.field_reason,
+      auto_send: r.auto_send,
+      auto_send_time: r.auto_send_time,
+      last_auto_sent_on: r.last_auto_sent_on,
+      geo_auto: r.geo_auto,
+      geo_lat: r.geo_lat,
+      geo_lng: r.geo_lng,
+      geo_radius: r.geo_radius,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    },
+  }));
+}
+
+/** Mark a template as having auto-sent on the given day (prevents repeats). */
+export async function markAutoSent(
+  templateId: string,
+  today: string,
+): Promise<void> {
+  await query(`update templates set last_auto_sent_on = $2 where id = $1`, [
+    templateId,
+    today,
+  ]);
 }

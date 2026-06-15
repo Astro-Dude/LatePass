@@ -13,6 +13,12 @@ export interface TemplateDraft {
   field_roll: string;
   field_arrival_time: string;
   field_reason: string;
+  auto_send: boolean;
+  auto_send_time: string;
+  geo_auto: boolean;
+  geo_lat: number | null;
+  geo_lng: number | null;
+  geo_radius: number;
 }
 
 /** Map a DB template row to a draft. Server-safe (no client code). */
@@ -29,5 +35,11 @@ export function toDraft(t: Template): TemplateDraft {
     field_roll: t.field_roll,
     field_arrival_time: t.field_arrival_time,
     field_reason: t.field_reason,
+    auto_send: t.auto_send,
+    auto_send_time: t.auto_send_time ?? "",
+    geo_auto: t.geo_auto,
+    geo_lat: t.geo_lat,
+    geo_lng: t.geo_lng,
+    geo_radius: t.geo_radius,
   };
 }

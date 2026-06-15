@@ -23,6 +23,14 @@ export function createOAuthClient(): OAuth2Client {
   );
 }
 
+/**
+ * Whether a post-login redirect target is one of our native app deep links.
+ * Guards against open-redirect abuse — only our own schemes are allowed.
+ */
+export function isAppReturnUri(uri: string): boolean {
+  return /^(latepass:|exp:)\/\//.test(uri);
+}
+
 export function buildAuthUrl(state: string): string {
   const client = createOAuthClient();
   return client.generateAuthUrl({

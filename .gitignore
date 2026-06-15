@@ -7,3 +7,10 @@ out
 .DS_Store
 .vercel
 next-env.d.ts
+
+# Expo / mobile
+mobile/.expo
+mobile/dist
+mobile/ios
+mobile/android
+mobile/expo-env.d.ts

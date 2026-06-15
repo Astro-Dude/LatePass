@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { exchangeCode } from "@/lib/google";
+import { exchangeCode, isAppReturnUri } from "@/lib/google";
 import { upsertAfterOAuth } from "@/lib/config";
 import { env } from "@/lib/env";
 
@@ -28,7 +28,22 @@ export async function GET(req: NextRequest) {
 
   try {
     const { refreshToken, email } = await exchangeCode(code);
-    const { manageToken } = await upsertAfterOAuth(email, refreshToken);
+    const { manageToken, sendToken } = await upsertAfterOAuth(
+      email,
+      refreshToken,
+    );
+
+    // Native-app login: bounce back into the app with its send token.
+    const appReturn = req.cookies.get("lp_oauth_return")?.value;
+    if (appReturn && isAppReturnUri(appReturn)) {
+      const sep = appReturn.includes("?") ? "&" : "?";
+      const res = NextResponse.redirect(
+        `${appReturn}${sep}token=${sendToken}`,
+      );
+      res.cookies.delete("lp_oauth_state");
+      res.cookies.delete("lp_oauth_return");
+      return res;
+    }
 
     const res = NextResponse.redirect(
       `${env.appBaseUrl}/manage/${manageToken}`,

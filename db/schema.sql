@@ -31,6 +31,13 @@ create table if not exists templates (
   field_roll         text not null default '',
   field_arrival_time text not null default '',
   field_reason       text not null default '',
+  auto_send          boolean not null default false,
+  auto_send_time     text,                                  -- 'HH:MM' in APP_TIMEZONE
+  last_auto_sent_on  date,                                  -- guard against double-send/day
+  geo_auto           boolean not null default false,        -- open-app location auto-send
+  geo_lat            double precision,
+  geo_lng            double precision,
+  geo_radius         integer not null default 150,          -- metres
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );

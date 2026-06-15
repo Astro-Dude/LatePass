@@ -39,6 +39,24 @@ export function formatDate(date: Date = new Date()): string {
   }).format(date);
 }
 
+/** Current date ('YYYY-MM-DD') and time ('HH:MM', 24h) in APP_TIMEZONE. */
+export function nowInAppTz(): { date: string; hhmm: string } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: env.appTimezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    hhmm: `${get("hour")}:${get("minute")}`,
+  };
+}
+
 /**
  * Replace every {placeholder} in `template` with its value. Unknown
  * placeholders are left untouched so a typo is visible rather than silently

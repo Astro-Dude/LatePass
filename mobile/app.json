@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "LatePass",
+    "slug": "latepass",
+    "scheme": "latepass",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "bundleIdentifier": "com.latepass.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ],
+        "NSLocationWhenInUseUsageDescription": "LatePass uses your location to auto-send your late note when you arrive at your saved spot.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "LatePass needs background location so it can auto-send when you reach your saved spot, even when the app is closed."
+      }
+    },
+    "android": {
+      "package": "com.latepass.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "LatePass auto-sends your late note when you arrive at your saved spot.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      "expo-notifications",
+      "expo-asset"
+    ],
+    "extra": {
+      "apiBaseUrl": "https://latepass-sage.vercel.app",
+      "eas": {
+        "projectId": "f78052f9-f864-4b52-a848-87ad1ee6247e"
+      }
+    }
+  }
+}
