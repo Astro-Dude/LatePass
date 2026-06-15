@@ -114,6 +114,25 @@ export async function setDailyCap(
   if (!res.ok) throw new Error((data.error as string) || "Couldn't save.");
 }
 
+/**
+ * Best-effort heartbeat so the backend can record that the background
+ * auto-send task fired (and what it decided). Never throws.
+ */
+export async function pingAutoCheck(
+  sendToken: string,
+  result: string,
+): Promise<void> {
+  try {
+    await fetch(`${BASE}/api/autocheck`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: sendToken, result }),
+    });
+  } catch {
+    /* best-effort — don't let logging break the task */
+  }
+}
+
 export async function sendNow(
   sendToken: string,
   templateId: string,

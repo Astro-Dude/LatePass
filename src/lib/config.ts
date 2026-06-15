@@ -379,6 +379,44 @@ export async function logSend(
   );
 }
 
+// ---- auto-send heartbeat (mobile background task observability) ----
+
+/**
+ * Record that the mobile background auto-send task fired, with its outcome
+ * (e.g. "skipped-away", "sent"). Stored as a `status='check'` row in send_logs
+ * — separate from real sends, so it never counts toward the daily cap.
+ */
+export async function logAutoCheck(
+  configId: string,
+  result: string,
+): Promise<void> {
+  await query(
+    `insert into send_logs (config_id, status, error)
+     values ($1, 'check', $2)`,
+    [configId, result.slice(0, 60)],
+  );
+}
+
+export interface AutoCheck {
+  at: string;
+  result: string | null;
+}
+
+/** Most recent background-task heartbeats, newest first. */
+export async function getRecentAutoChecks(
+  configId: string,
+  limit = 20,
+): Promise<AutoCheck[]> {
+  return query<AutoCheck>(
+    `select sent_at as at, error as result
+       from send_logs
+      where config_id = $1 and status = 'check'
+      order by sent_at desc
+      limit $2`,
+    [configId, limit],
+  );
+}
+
 // ---- auto-send (cron) ----
 
 /** A template that is due to auto-send now, with its owning config. */

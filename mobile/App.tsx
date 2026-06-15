@@ -38,7 +38,7 @@ import {
   saveSettings,
   type Settings,
 } from "./src/storage";
-import { maybeAutoSend, startAutoSend, stopAutoSend } from "./src/geofence";
+import { runAutoCheck, startAutoSend, stopAutoSend } from "./src/geofence";
 import { CC_OPTIONS, RECIPIENT_OPTIONS } from "./src/contacts";
 import { renderTemplate } from "./src/render";
 
@@ -395,8 +395,23 @@ export default function App() {
                 onCapture={captureLocation}
                 onToggle={toggleAuto}
                 onTest={async () => {
-                  const r = await maybeAutoSend();
-                  Alert.alert("Auto-send check", r);
+                  const r = await runAutoCheck({ ignoreEnabled: true });
+                  const explain: Record<typeof r, string> = {
+                    sent: "Sent ✓ — the rule matched and the mail went out.",
+                    "skipped-disabled":
+                      "Not armed, or no template/location set. Turn auto-send on and save a spot first.",
+                    "skipped-time":
+                      "It's before your set time. Set the time to a minute ago, then test again.",
+                    "skipped-already":
+                      "Already sent today — it only fires once per day.",
+                    "skipped-location":
+                      "Couldn't get a GPS fix. Check location permission.",
+                    "skipped-away":
+                      "You're not within the saved radius right now, so it won't send.",
+                    failed:
+                      "Rule matched but the send failed (network/login). Check your connection.",
+                  };
+                  Alert.alert("Auto-send check", explain[r] ?? r);
                 }}
                 busy={busy}
               />

@@ -2,7 +2,7 @@ import * as TaskManager from "expo-task-manager";
 import * as Location from "expo-location";
 import * as BackgroundTask from "expo-background-task";
 import * as Notifications from "expo-notifications";
-import { sendNow } from "./api";
+import { sendNow, pingAutoCheck } from "./api";
 import { getSettings, patchSettings } from "./storage";
 
 export const AUTOSEND_TASK = "latepass-autosend";
@@ -66,10 +66,13 @@ export type AutoSendResult =
  * hits is what triggers it. Run periodically by the background task, and can be
  * run manually to test.
  */
-export async function maybeAutoSend(): Promise<AutoSendResult> {
+export async function maybeAutoSend(opts?: {
+  ignoreEnabled?: boolean;
+}): Promise<AutoSendResult> {
   const s = await getSettings();
+  const enabledOk = opts?.ignoreEnabled || s.autoEnabled;
   if (
-    !s.autoEnabled ||
+    !enabledOk ||
     !s.sendToken ||
     !s.autoTemplateId ||
     s.lat == null ||
@@ -115,15 +118,34 @@ export async function maybeAutoSend(): Promise<AutoSendResult> {
   }
 }
 
+/**
+ * Run the rule and report the outcome to the backend (a heartbeat), so firing
+ * can be observed server-side even when the app is closed. Use this from the
+ * background task and the manual test.
+ */
+export async function runAutoCheck(opts?: {
+  ignoreEnabled?: boolean;
+}): Promise<AutoSendResult> {
+  let result: AutoSendResult = "failed";
+  try {
+    result = await maybeAutoSend(opts);
+  } catch {
+    /* leave result = "failed" */
+  }
+  try {
+    const s = await getSettings();
+    if (s.sendToken) await pingAutoCheck(s.sendToken, result);
+  } catch {
+    /* heartbeat is best-effort */
+  }
+  return result;
+}
+
 // Background task: the OS wakes it periodically (~every 15 min, inexact). Each
 // run re-checks the rule, so once the clock passes your time and you're at the
 // spot, the next wake-up sends it — even with the app closed.
 TaskManager.defineTask(AUTOSEND_TASK, async () => {
-  try {
-    await maybeAutoSend();
-  } catch {
-    /* swallow — try again next cycle */
-  }
+  await runAutoCheck();
   return BackgroundTask.BackgroundTaskResult.Success;
 });
 
